@@ -1,0 +1,22 @@
+{
+  "spaces": [
+    {
+      "space_id": 1001,
+      "name": "Demo E-Commerce Store",
+      "slug": "demo-store",
+      "project_key": "your_taku_public_project_key_here",
+      "primary_domain": "store.example.com",
+      "account_id": 101,
+      "aliases": ["store", "demo"]
+    },
+    {
+      "space_id": 1002,
+      "name": "Demo SaaS Platform",
+      "slug": "demo-saas",
+      "project_key": "your_second_project_key_here",
+      "primary_domain": "app.example.com",
+      "account_id": 101,
+      "aliases": ["saas", "app"]
+    }
+  ]
+}

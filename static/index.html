@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taku Studio · Production Management & Observability</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <div class="brand-title">
+        Taku Studio
+        <span class="badge-tag">v1.0 · SSOT</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="space-select-wrapper">
+        <select id="spaceSelector" class="space-select">
+          <option value="">Loading spaces...</option>
+        </select>
+        <span class="select-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div id="connectionStatus" class="status-pill">
+        <span class="pulse-dot"></span>
+        <span id="connectionText">Taku API Live</span>
+      </div>
+
+      <button id="btnDiagnose" class="btn btn-secondary" title="Run full system diagnostic">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+        Health Check
+      </button>
+
+      <button id="btnSync" class="btn btn-secondary" title="Sync live from Taku API">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="syncIcon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        Sync
+      </button>
+    </div>
+  </header>
+
+  <!-- 3-Column Main Layout -->
+  <main class="app-container">
+    <!-- Left Column: Campaigns & Spaces -->
+    <aside class="sidebar-left">
+      <div class="sidebar-header">
+        <div id="spaceMetaCard" class="space-card">
+          <div class="space-card-name" id="currentSpaceName">Select a Space</div>
+          <div class="space-card-meta" id="currentSpaceMeta">Key: &mdash; | Domain: &mdash;</div>
+        </div>
+
+        <div class="search-filter-box">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="campaignSearch" class="search-input" placeholder="Search campaigns...">
+          </div>
+          <button id="btnNewCampaign" class="btn btn-primary" title="Create Campaign">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New
+          </button>
+        </div>
+      </div>
+
+      <div class="campaign-list" id="campaignListContainer">
+        <!-- Rendered by app.js -->
+        <div style="padding: 2rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+          Loading campaigns from Taku API...
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Stage: Device Simulator & Live Interactive Popup -->
+    <section class="stage-center">
+      <div class="stage-toolbar">
+        <div class="viewport-controls">
+          <button class="viewport-btn active" data-viewport="desktop">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            Desktop (1024px)
+          </button>
+          <button class="viewport-btn" data-viewport="tablet">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+            Tablet (768px)
+          </button>
+          <button class="viewport-btn" data-viewport="mobile">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+            Mobile (375px)
+          </button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <a id="btnOpenFeed" href="#" target="_blank" class="btn btn-ghost" title="Open Standalone Feed URL">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            Standalone Feed
+          </a>
+        </div>
+      </div>
+
+      <div class="stage-canvas">
+        <div id="deviceFrame" class="device-frame desktop">
+          <div class="frame-browser-bar">
+            <div class="traffic-lights">
+              <span class="traffic-dot traffic-red"></span>
+              <span class="traffic-dot traffic-yellow"></span>
+              <span class="traffic-dot traffic-green"></span>
+            </div>
+            <div class="frame-url-bar" id="frameUrlBar">https://example.com/demo</div>
+          </div>
+
+          <div class="frame-viewport" id="frameViewport">
+            <!-- Simulated Host Page Content -->
+            <div class="mock-page-content">
+              <div class="mock-nav"></div>
+              <div class="mock-hero"></div>
+              <div class="mock-grid">
+                <div class="mock-box"></div>
+                <div class="mock-box"></div>
+                <div class="mock-box"></div>
+              </div>
+            </div>
+
+            <!-- Announcement Banner Bar (display_type == banner) -->
+            <div class="taku-banner-bar" id="bannerBar" style="display: none;">
+              <span class="banner-text" id="bannerContent">Artwork Ready in 1-2 Days</span>
+              <button class="banner-close-btn" id="bannerCloseBtn" title="Dismiss banner">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <!-- Authentic Taku Popup Render -->
+            <div class="taku-popup-overlay" id="popupOverlay">
+              <div class="taku-popup-card" id="popupCard">
+                <button class="popup-close-btn" id="popupCloseBtn" title="Dismiss popup">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+
+                <img id="popupMediaImage" class="popup-media-banner" src="" alt="Popup banner" style="display: none;">
+
+                <div class="popup-body">
+                  <div class="popup-rich-headline" id="popupHeadline">
+                    Get the 'Learn Anything Prompt'
+                  </div>
+
+                  <form class="popup-form" id="interactivePopupForm" onsubmit="return false;">
+                    <div id="popupFormInputsContainer"></div>
+
+                    <button type="submit" class="popup-submit-btn" id="popupSubmitBtn" style="background-color: #3345EE; color: #ffffff;">
+                      Get Prompt
+                    </button>
+                  </form>
+
+                  <div class="popup-success-banner" id="popupSuccessBanner" style="display: none;">
+                    Thank you! Submission received.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Inspector, Simulator & Diagnostics -->
+    <aside class="sidebar-right">
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="inspector">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Inspector
+        </button>
+        <button class="tab-btn" data-tab="simulator">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Simulator
+        </button>
+        <button class="tab-btn" data-tab="snippet">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Embed
+        </button>
+        <button class="tab-btn" data-tab="stream">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+          Live
+        </button>
+      </nav>
+
+      <!-- Tab 1: Inspector -->
+      <div id="tabInspector" class="tab-content">
+        <div class="inspector-section">
+          <div class="section-label">Campaign Configuration</div>
+          
+          <div class="form-group">
+            <label class="form-label">Popup ID</label>
+            <input type="text" id="inspectorPopupId" class="form-control" readonly style="font-family: var(--font-mono); color: #38bdf8;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Campaign Name / Headline</label>
+            <input type="text" id="inspectorName" class="form-control">
+          </div>
+
+          <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <div>
+              <label class="form-label">Display Type</label>
+              <select id="inspectorDisplayType" class="form-control">
+                <option value="modal">Modal</option>
+                <option value="popup">Popup</option>
+                <option value="banner">Banner</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Delay (ms)</label>
+              <input type="number" id="inspectorDelay" class="form-control" value="7000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Webhook Destination (Albato)</label>
+            <input type="text" id="inspectorWebhook" class="form-control" style="font-family: var(--font-mono); font-size: 0.72rem;">
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0;">
+            <span class="form-label" style="margin: 0;">Campaign Active</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="inspectorEnabledToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button id="btnSaveInspector" class="btn btn-primary" style="flex: 1;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              Save & Sync Authoritative
+            </button>
+            <button id="btnDeleteCampaign" class="btn btn-danger" style="padding: 0.5rem 0.75rem;" title="Delete Campaign from Taku">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="inspector-section">
+          <div class="section-label">Active Targeting Conditions</div>
+          <div id="inspectorConditionsList" style="display: flex; flex-direction: column; gap: 0.4rem;">
+            <!-- Rendered by app.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Trigger Simulator -->
+      <div id="tabSimulator" class="tab-content" style="display: none;">
+        <div class="inspector-section">
+          <div class="section-label">Audience & Trigger Evaluator</div>
+          <p style="font-size: 0.75rem; color: var(--text-secondary);">
+            Test whether this campaign triggers against customer URL patterns, devices, exit intent, and location.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label">Visitor URL</label>
+            <input type="text" id="simTestUrl" class="form-control" value="https://example.com/demo">
+          </div>
+
+          <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <div>
+              <label class="form-label">Device Type</label>
+              <select id="simTestDevice" class="form-control">
+                <option value="desktop">Desktop</option>
+                <option value="mobile">Mobile</option>
+                <option value="tablet">Tablet</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Past Triggers Count</label>
+              <input type="number" id="simPastCount" class="form-control" value="0">
+            </div>
+          </div>
+
+          <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <div>
+              <label class="form-label">Visitor Country</label>
+              <input type="text" id="simLocation" class="form-control" placeholder="e.g. US, JP">
+            </div>
+            <div style="display: flex; align-items: flex-end; padding-bottom: 0.4rem;">
+              <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;">
+                <input type="checkbox" id="simExitIntent">
+                <span>Exit Intent Active</span>
+              </label>
+            </div>
+          </div>
+
+          <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem; cursor: pointer;">
+            <input type="checkbox" id="simIgnorePaused" checked>
+            <span>Simulate as Active (Preview rules while paused)</span>
+          </label>
+
+          <button id="btnRunSimulation" class="btn btn-primary" style="margin-top: 0.5rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Evaluate Conditions
+          </button>
+        </div>
+
+        <div class="inspector-section">
+          <div class="section-label">Evaluation Audit Result</div>
+          <div id="simResultContainer">
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; padding: 1rem;">
+              Click 'Evaluate Conditions' to run test against real rules.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Embed Snippet & Feed -->
+      <div id="tabSnippet" class="tab-content" style="display: none;">
+        <div class="inspector-section">
+          <div class="section-label">Frontend Embed Code</div>
+          <p style="font-size: 0.75rem; color: var(--text-secondary);">
+            Paste this snippet before the closing &lt;/body&gt; tag of your website.
+          </p>
+
+          <div class="code-box">
+            <div class="code-box-header">
+              <span style="color: var(--text-muted); font-size: 0.7rem;">HTML SCRIPT TAG</span>
+              <button id="btnCopySnippet" class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copy
+              </button>
+            </div>
+            <code id="embedSnippetCode">&lt;script src="https://cdn.taku.cool/js/latest.js"&gt;&lt;/script&gt;</code>
+          </div>
+        </div>
+
+        <div class="inspector-section">
+          <div class="section-label">CDN & Integrity Check</div>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Script CDN:</span>
+              <span style="font-family: var(--font-mono); color: var(--color-success);">cdn.taku.cool/js/latest.js</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Public Project Key:</span>
+              <span id="displayProjectKey" style="font-family: var(--font-mono); color: #38bdf8;">&mdash;</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Live Stream & SSE Logs -->
+      <div id="tabStream" class="tab-content" style="display: none;">
+        <div class="inspector-section">
+          <div class="section-label">Realtime Event Stream (SSE)</div>
+          <p style="font-size: 0.75rem; color: var(--text-secondary);">
+            Live push notifications and state mutations streamed from the Taku API.
+          </p>
+
+          <div class="event-log-container" id="eventLogContainer">
+            <div class="log-entry">
+              <span class="log-time">00:00:00</span>
+              <span class="log-event">SYSTEM</span>
+              <span>Event stream initialized</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="inspector-section">
+          <div class="section-label">API Health Status</div>
+          <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.75rem;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-secondary);">Account:</span>
+              <span id="displayAccountId" style="font-family: var(--font-mono);">Connected</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-secondary);">Auth Key:</span>
+              <span id="displayAuthKey" style="font-family: var(--font-mono);">Active (unattended)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-secondary);">API Base:</span>
+              <span style="font-family: var(--font-mono);">https://api.taku.cool/v1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Diagnostic Report Modal -->
+  <div id="diagnosticModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+          Taku API Diagnostic Report
+        </h3>
+        <button id="btnCloseDiagModal" class="btn btn-ghost" style="padding: 0.2rem 0.4rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="diagModalBody">
+        Loading live diagnostics across all customer spaces...
+      </div>
+      <div class="modal-footer">
+        <button id="btnDismissDiag" class="btn btn-secondary">Close</button>
+      </div>
+  <!-- Create Campaign Modal -->
+  <div id="createCampaignModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Create New Taku Campaign
+        </h3>
+        <button id="btnCloseCreateModal" class="btn btn-ghost" style="padding: 0.2rem 0.4rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="createCampaignForm" onsubmit="return false;">
+          <div class="form-group">
+            <label class="form-label">Campaign Name / Headline *</label>
+            <input type="text" id="newCampaignName" class="form-control" placeholder="e.g. VIP Member Discount" required>
+          </div>
+          <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <div>
+              <label class="form-label">Display Type</label>
+              <select id="newDisplayType" class="form-control">
+                <option value="modal">Modal Popup</option>
+                <option value="banner">Announcement Banner</option>
+                <option value="popup">Corner Popup</option>
+                <option value="snippet">Inline Snippet</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Display Delay (ms)</label>
+              <input type="number" id="newDisplayDelay" class="form-control" value="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Variation Content / Rich Text *</label>
+            <textarea id="newHeadlineContent" class="form-control" rows="3" placeholder="Get 10% OFF on all orders\n**Stay connected with the latest news**" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lead Form Mode</label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; cursor: pointer;">
+              <input type="checkbox" id="newIncludeForm" checked>
+              <span>Include Email Capture Form Block</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Page URL Pattern (optional)</label>
+            <input type="text" id="newTargetUrl" class="form-control" placeholder="https://yourdomain.com/">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelCreateModal" class="btn btn-secondary">Cancel</button>
+        <button id="btnSubmitCreateCampaign" class="btn btn-primary">Create & Sync API</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  taku-studio:
+    build: .
+    container_name: taku-studio
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      - TAKU_API_KEY=${TAKU_API_KEY}
+    env_file:
+      - .env

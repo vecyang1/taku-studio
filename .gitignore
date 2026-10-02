@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / test caches
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+node_modules/
+.DS_Store
+*.log
+
+# Environment secrets & local space overrides
+.env
+.env.*
+!.env.example
+.spaces.json
+!.spaces.example.json
+
+# Gate 2: Private context files & internal agent governance
+VAULT.md
+FILE_MAP_INDEX.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+CODEX.md
+decisions.md
+progress.md
+task_plan.md
+handoff.md
+operations/
+vault/
+canvases/
+graphify-out/
